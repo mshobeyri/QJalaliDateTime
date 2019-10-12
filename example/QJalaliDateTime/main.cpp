@@ -1,12 +1,13 @@
 #include "qjalalidatetime.h"
 #include <QCoreApplication>
-#include <QDateTime>
-#include <QTimeZone>
 #include <QtDebug>
 
 int
 main(int argc, char* argv[]) {
     QCoreApplication a(argc, argv);
-    qDebug() << QDateTime::fromString("111","dM");
+    QJalaliDateTime t;
+    qDebug() << t;
+    qDebug() << t.toString();
+    qDebug() << t.toString("yy MM dd",QJalaliDateTime::LatinNumbers);
     return a.exec();
 }

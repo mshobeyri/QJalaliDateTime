@@ -4,6 +4,11 @@
 #include <QDebug>
 #include <QVector>
 
+#if QmlPorject
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#endif
+
 class QJalaliDateTimePrivate
 {
 public:
@@ -87,14 +92,16 @@ struct CharVector : public QVector<CharHelper> {
     }
 };
 
-QJalaliDateTime::QJalaliDateTime() : d_ptr(new QJalaliDateTimePrivate) {}
+QJalaliDateTime::QJalaliDateTime() : d_ptr(new QJalaliDateTimePrivate) {
+    d_ptr->dateTime = QDateTime::currentDateTime();
+}
 
-QJalaliDateTime::~QJalaliDateTime() {}
 
 QJalaliDateTime::QJalaliDateTime(const QDateTime& gregorianDateime)
     : d_ptr(new QJalaliDateTimePrivate) {
     d_ptr->dateTime = gregorianDateime;
 }
+
 QJalaliDateTime::QJalaliDateTime(const QJalaliDateTime& datetime)
     : d_ptr(new QJalaliDateTimePrivate) {
     d_ptr->dateTime = datetime.toGregorian();
@@ -104,10 +111,11 @@ QJalaliDateTime::QJalaliDateTime(int jalaliYear, int jalaliMonth, int jalaliDay)
     : d_ptr(new QJalaliDateTimePrivate) {
     QVector<int> gdateVec =
         jalaliToGregorian(jalaliYear, jalaliMonth, jalaliDay);
-    qDebug() << gdateVec;
     d_ptr->dateTime.setDate(QDate(gdateVec[0], gdateVec[1], gdateVec[2]));
-    qDebug() << d_ptr->dateTime;
 }
+
+QJalaliDateTime::~QJalaliDateTime() {}
+
 
 qint64
 QJalaliDateTime::daysTo(const QJalaliDateTime& other) const {
@@ -281,6 +289,83 @@ QJalaliDateTime::toString(const QString& format, Numbers numbersView) const {
     return result;
 }
 
+int
+QJalaliDateTime::getGYear() {
+    return d_ptr->dateTime.date().year();
+}
+
+void
+QJalaliDateTime::setGYear(int year) {
+    d_ptr->dateTime.setDate(QDate{year,
+                                  d_ptr->dateTime.date().month(),
+                                  d_ptr->dateTime.date().day()});
+}
+
+int
+QJalaliDateTime::getGMonth() {
+    return d_ptr->dateTime.date().month();
+}
+
+void
+QJalaliDateTime::setGMonth(int month) {
+    d_ptr->dateTime.setDate(QDate{d_ptr->dateTime.date().year(),
+                                  month,
+                                  d_ptr->dateTime.date().day()});
+}
+
+int
+QJalaliDateTime::getGDay() {
+    return d_ptr->dateTime.date().day();
+}
+
+void
+QJalaliDateTime::setGDay(int day) {
+    d_ptr->dateTime.setDate(QDate{d_ptr->dateTime.date().year(),
+                                  d_ptr->dateTime.date().month(),
+                                  day});
+}
+
+int
+QJalaliDateTime::getJYear() {
+    return toString("yyyy", Numbers::LatinNumbers).toInt();
+}
+
+void
+QJalaliDateTime::setJYear(int year) {
+    updateByJalaliDate(year, getJMonth(), getJDay());
+}
+
+int
+QJalaliDateTime::getJMonth() {
+    return toString("M", Numbers::LatinNumbers).toInt();
+}
+
+void
+QJalaliDateTime::setJMonth(int month) {
+    updateByJalaliDate(getJYear(), month, getJDay());
+}
+
+int
+QJalaliDateTime::getJDay() {
+    return toString("d", Numbers::LatinNumbers).toInt();
+}
+
+void
+QJalaliDateTime::setJDay(int day) {
+    updateByJalaliDate(getJYear(), getJMonth(), day);
+}
+
+
+#if QmlPorject
+static QJalaliDateTime dt{QDateTime::currentDateTime()};
+void
+QJalaliDateTime::registerQml(QQmlApplicationEngine& engine) {
+    engine.rootContext()->setContextProperty("JDateTime", &dt);
+    qmlRegisterType<QJalaliDateTime>(
+        "QtQuick.JalaliDateTime", 1, 0, "JalaliDateTime");
+}
+#endif
+
 QJalaliDateTime
 QJalaliDateTime::fromGregorian(const QDateTime& datetime) {
     return QJalaliDateTime{datetime};
@@ -302,6 +387,13 @@ void
 QJalaliDateTime::setDefaultNumberTextView(
     QJalaliDateTime::Numbers numbersView) {
     d_ptr->defaultNumbersView = numbersView;
+}
+
+void
+QJalaliDateTime::updateByJalaliDate(
+    int jalaliYear, int jalaliMonth, int jalaliDay) {
+    auto jd = fromJalaliDate(jalaliYear, jalaliMonth, jalaliDay);
+    d_ptr->dateTime.setDate(jd.toGregorian().date());
 }
 
 #if !defined(QT_NO_DEBUG_STREAM) && QT_CONFIG(datestring)

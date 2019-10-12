@@ -1,4 +1,8 @@
 
+contains(QT,quick){
+DEFINES += QmlPorject
+}
+
 HEADERS += \
     $$PWD/qjalalidatetime.h \
     $$PWD/jalalidatetimehelper.h

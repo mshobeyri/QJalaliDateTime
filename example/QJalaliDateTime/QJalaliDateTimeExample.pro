@@ -23,4 +23,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 
-include(../src/QJalaliDateTime.pri)
+include(../../src/QJalaliDateTime.pri)

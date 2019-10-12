@@ -42,6 +42,7 @@ QVector<int> gregorianToJalali(int gy, int gm, int gd) {
     int jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
     return {jy, jm, jd};
 }
+
 QVector<int> jalaliToGregorian(int jy, int jm, int jd) {
     int gy=(jy<=979)?621:1600;
     jy-=(jy<=979)?0:979;
