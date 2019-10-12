@@ -11,29 +11,9 @@ public:
     QJalaliDateTime::Numbers defaultNumbersView =
         QJalaliDateTime::ArabicIndicNumbers;
 
-    QVector<int> GregorianToJalali(int gy, int gm, int gd) {
-        QVector<int> gdm = {
-            0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-        int jy = gy <= 1600 ? 0 : 979;
-
-        gy -= (gy <= 1600) ? 621 : 1600;
-        int gy2  = (gm > 2) ? (gy + 1) : gy;
-        int days = (365 * gy) + (int((gy2 + 3) / 4)) - (int((gy2 + 99) / 100)) +
-                   (int((gy2 + 399) / 400)) - 80 + gd + gdm[gm - 1];
-        jy += 33 * (int(days / 12053));
-        days %= 12053;
-        jy += 4 * (int(days / 1461));
-        days %= 1461;
-        jy += int((days - 1) / 365);
-        if (days > 365)
-            days = (days - 1) % 365;
-        int jm = (days < 186) ? 1 + int(days / 31) : 7 + int((days - 186) / 30);
-        int jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-        return {jy, jm, jd};
-    }
     QVector<int> GregorianToJalali() {
         auto date = dateTime.date();
-        return GregorianToJalali(date.year(), date.month(), date.day());
+        return gregorianToJalali(date.year(), date.month(), date.day());
     }
 };
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,13 +91,22 @@ QJalaliDateTime::QJalaliDateTime() : d_ptr(new QJalaliDateTimePrivate) {}
 
 QJalaliDateTime::~QJalaliDateTime() {}
 
-QJalaliDateTime::QJalaliDateTime(const QDateTime& datetime)
+QJalaliDateTime::QJalaliDateTime(const QDateTime& gregorianDateime)
     : d_ptr(new QJalaliDateTimePrivate) {
-    d_ptr->dateTime = datetime;
+    d_ptr->dateTime = gregorianDateime;
 }
 QJalaliDateTime::QJalaliDateTime(const QJalaliDateTime& datetime)
     : d_ptr(new QJalaliDateTimePrivate) {
     d_ptr->dateTime = datetime.toGregorian();
+}
+
+QJalaliDateTime::QJalaliDateTime(int jalaliYear, int jalaliMonth, int jalaliDay)
+    : d_ptr(new QJalaliDateTimePrivate) {
+    QVector<int> gdateVec =
+        jalaliToGregorian(jalaliYear, jalaliMonth, jalaliDay);
+    qDebug() << gdateVec;
+    d_ptr->dateTime.setDate(QDate(gdateVec[0], gdateVec[1], gdateVec[2]));
+    qDebug() << d_ptr->dateTime;
 }
 
 qint64
@@ -138,6 +127,31 @@ QJalaliDateTime::toSecsSinceEpoch() const {
 QDateTime
 QJalaliDateTime::toGregorian() const {
     return d_ptr->dateTime;
+}
+
+QJalaliDateTime
+QJalaliDateTime::addDays(qint64 ndays) const {
+    return d_ptr->dateTime.addDays(ndays);
+}
+
+QJalaliDateTime
+QJalaliDateTime::addMSecs(qint64 msecs) const {
+    return d_ptr->dateTime.addMSecs(msecs);
+}
+
+QJalaliDateTime
+QJalaliDateTime::addMonths(int nmonths) const {
+    return d_ptr->dateTime.addMonths(nmonths);
+}
+
+QJalaliDateTime
+QJalaliDateTime::addSecs(qint64 s) const {
+    return d_ptr->dateTime.addSecs(s);
+}
+
+QJalaliDateTime
+QJalaliDateTime::addYears(int nyears) const {
+    return d_ptr->dateTime.addYears(nyears);
 }
 
 QString
@@ -272,6 +286,18 @@ QJalaliDateTime::fromGregorian(const QDateTime& datetime) {
     return QJalaliDateTime{datetime};
 }
 
+QJalaliDateTime
+QJalaliDateTime::fromGregorianString(
+    const QString& string, Qt::DateFormat format) {
+    return QDateTime::fromString(string, format);
+}
+
+QJalaliDateTime
+QJalaliDateTime::fromGregorianString(
+    const QString& string, const QString& format) {
+    return QDateTime::fromString(string, format);
+}
+
 void
 QJalaliDateTime::setDefaultNumberTextView(
     QJalaliDateTime::Numbers numbersView) {
@@ -295,32 +321,23 @@ QJalaliDateTime::currentDateTime() {
     return QJalaliDateTime{QDateTime::currentDateTime()};
 }
 
-QJalaliDateTime QJalaliDateTime::fromJalaliDate(int year, int month, int day)
-{
-//    function jalali_to_gregorian(jy,jm,jd){
-//        var gy=(jy<=979)?621:1600;
-//        jy-=(jy<=979)?0:979;
-//        var days=(365*jy) +((parseInt(jy/33))*8) +(parseInt(((jy%33)+3)/4))
-//            +78 +jd +((jm<7)?(jm-1)*31:((jm-7)*30)+186);
-//        gy+=400*(parseInt(days/146097));
-//        days%=146097;
-//        if(days > 36524){
-//            gy+=100*(parseInt(--days/36524));
-//            days%=36524;
-//            if(days >= 365)days++;
-//        }
-//        gy+=4*(parseInt((days)/1461));
-//        days%=1461;
-//        gy+=parseInt((days-1)/365);
-//        if(days > 365)days=(days-1)%365;
-//        var gd=days+1;
-//        var sal_a=[0,31,((gy%4==0 && gy%100!=0) || (gy%400==0))?29:28,31,30,31,30,31,31,30,31,30,31];
-//        var gm
-//            for(gm=0;gm<13;gm++){
-//            var v=sal_a[gm];
-//            if(gd <= v)break;
-//            gd-=v;
-//        }
-//        return [gy,gm,gd];
-//    }
+QJalaliDateTime
+QJalaliDateTime::currentDateTimeUtc() {
+    return QJalaliDateTime{QDateTime::currentDateTimeUtc()};
+}
+
+QJalaliDateTime
+QJalaliDateTime::fromJalaliDate(
+    int jalaliYear, int jalaliMonth, int jalaliDay) {
+    return QJalaliDateTime{jalaliYear, jalaliMonth, jalaliDay};
+}
+
+QJalaliDateTime
+QJalaliDateTime::fromMSecsSinceEpoch(qint64 gregorianMsecs) {
+    return QJalaliDateTime{QDateTime::fromMSecsSinceEpoch(gregorianMsecs)};
+}
+
+QJalaliDateTime
+QJalaliDateTime::fromSecsSinceEpoch(qint64 gregorianSecs) {
+    return QJalaliDateTime{QDateTime::fromSecsSinceEpoch(gregorianSecs)};
 }

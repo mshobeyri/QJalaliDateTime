@@ -15,8 +15,9 @@ public:
 
     enum Numbers { ArabicIndicNumbers, LatinNumbers, DefaultNumbers };
 
-    QJalaliDateTime(const QDateTime& datetime);
+    QJalaliDateTime(const QDateTime& gregorianDateime);
     QJalaliDateTime(const QJalaliDateTime& datetime);
+    QJalaliDateTime(int jalaliYear, int jalaliMonth, int jalaliDay);
     qint64 daysTo(const QJalaliDateTime& other) const;
 
     QJalaliDateTime toUTC() const;
@@ -35,12 +36,14 @@ public:
 
     static QJalaliDateTime fromJalaliDate(int year, int month, int day);
     static QJalaliDateTime fromMSecsSinceEpoch(qint64 gregorianMsecs);
-    static QJalaliDateTime fromSecsSinceEpoch(qint64 gregorianMsecs);
+    static QJalaliDateTime fromSecsSinceEpoch(qint64 gregorianSecs);
     static QJalaliDateTime fromGregorian(const QDateTime& datetime);
+
+    static QJalaliDateTime fromGregorianString(
+        const QString& string, Qt::DateFormat format = Qt::TextDate);
     static QJalaliDateTime
-    fromString(const QString& string, Qt::DateFormat format = Qt::TextDate);
-    static QJalaliDateTime
-    fromString(const QString& string, const QString& format);
+                           fromGregorianString(const QString& string, const QString& format);
+
     void
     setDefaultNumberTextView(Numbers numbersView = Numbers::ArabicIndicNumbers);
 
@@ -48,9 +51,6 @@ public:
     QString toString(
         const QString& format,
         Numbers        numbersView = Numbers::DefaultNumbers) const;
-
-    //    QString         toString(Qt::DateFormat format = Qt::TextDate) const;
-    //    QString         toString(QStringView format) const;
 
 #if !defined(QT_NO_DEBUG_STREAM) && QT_CONFIG(datestring)
     friend Q_CORE_EXPORT QDebug

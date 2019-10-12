@@ -7,8 +7,6 @@
 int
 main(int argc, char* argv[]) {
     QCoreApplication a(argc, argv);
-    qDebug() << QJalaliDateTime{QDateTime::currentDateTime()};
-
-    qDebug() << QDateTime::currentDateTime();
+    qDebug() << QDateTime::fromString("111","dM");
     return a.exec();
 }
